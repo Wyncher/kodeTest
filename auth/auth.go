@@ -5,10 +5,16 @@ var users map[string]string
 
 func Authentificate(login string, pswd string) bool {
 	//тут может быть проверка пользователя в БД
-	//если пользователь имеет такие данные
+	//проверка на наличие пользователя
+	users = make(map[string]string)
+	//добавление двух пользователей
+	users["user"] = "password"
+	users["user1"] = "password"
+	//проверка(или ее подобие) на наличие пользователя в списке
 	if users[login] == pswd {
+		//Пользователь найден, значит его заметки где-то должны быть...
 		return true
 	}
-	return true
-	//return false
+	//Если пользователя нет, значит он не оставлял заметку и продолжить не может
+	return false
 }

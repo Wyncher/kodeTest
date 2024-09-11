@@ -3,7 +3,6 @@ package speller
 import (
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"log"
 	"main/models"
 	"net/http"
@@ -12,19 +11,16 @@ import (
 )
 
 func CheckText(text string) string {
-	// Создаем HTTP-клиент с отключенной проверкой сертификатов
+	// Создаем HTTP-клиент с отключенной проверкой сертификатов(с включенной проверкой сертификат не действителен)
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Отключение проверки TLS
 		},
 	}
-
-	// Текст для проверки
-	//text = "Привет, как дила?"
-
 	// Формируем параметры запроса
 	data := url.Values{}
 	data.Set("text", text)
+	//Язык Русский
 	data.Set("lang", "ru")
 
 	// Отправляем запрос на Yandex Speller API
@@ -38,28 +34,25 @@ func CheckText(text string) string {
 	}
 	defer resp.Body.Close()
 
-	// Декодируем ответ
+	// Декодирирование ответа
 	var spellErrors []models.SpellError
 	if err := json.NewDecoder(resp.Body).Decode(&spellErrors); err != nil {
 		log.Fatalf("Ошибка при декодировании ответа: %v", err)
 	}
-	// Если ошибок нет, выводим оригинальный текст
+	// Если ошибок нет, возвращается оригинальный текст
 	if len(spellErrors) == 0 {
-		fmt.Println("Ошибки не найдены!")
-		fmt.Println("Текст: ", text)
 		return text
 	}
-
-	// Исправляем текст, заменяя слова на первые предложения
+	// Если ошибки есть, то выполняются замены
 	updatedText := text
-	for i := len(spellErrors) - 1; i >= 0; i-- { // Идем с конца, чтобы не сместить индексы
+	for i := len(spellErrors) - 1; i >= 0; i-- { // подсчёт с конца, чтобы не сместить индексы символов в начале строки.
 		spellError := spellErrors[i]
+		runesUpdatedText := []rune(updatedText)
 		if len(spellError.Suggest) > 0 {
-			// Берем первое предложенное исправление
+			// Выбор первого предложенного исправления
 			suggestion := spellError.Suggest[0]
-
-			// Заменяем ошибочное слово на исправление
-			updatedText = updatedText[:spellError.Pos] + suggestion + updatedText[(spellError.Pos+spellError.Len)*2:]
+			// Замена ошибочного слово на исправленное(с конвертацией в руны)
+			updatedText = strings.Replace(updatedText, string(runesUpdatedText[spellError.Pos:(spellError.Pos+spellError.Len)]), suggestion, 1)
 		}
 	}
 	return updatedText

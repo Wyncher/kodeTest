@@ -2,7 +2,9 @@ package apis
 
 import (
 	"encoding/json"
+	"errors"
 	authentification "main/auth"
+	"main/logger"
 	"main/models"
 	"main/speller"
 	"net/http"
@@ -21,7 +23,8 @@ func GetNotes(w http.ResponseWriter, r *http.Request) {
 	var auth models.GetRequest
 	// извлекаем данные из запроса
 	if err := json.NewDecoder(r.Body).Decode(&auth); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		//http.Error(w, err.Error(), http.StatusBadRequest)
+		logger.LogError(r, err)
 		return
 	}
 	notesMu.Lock()
@@ -35,10 +38,8 @@ func GetNotes(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(notesResponse)
 	} else {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode("error")
+		logger.LogError(r, errors.New("User not found"))
 	}
-
 }
 
 // Обработчик для создания новой заметки
@@ -47,7 +48,7 @@ func CreateNote(w http.ResponseWriter, r *http.Request) {
 
 	// извлекаем данные из запроса
 	if err := json.NewDecoder(r.Body).Decode(&newNote); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		logger.LogError(r, err)
 		return
 	}
 
