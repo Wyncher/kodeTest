@@ -4,7 +4,6 @@ go 1.21.5
 
 require (
 	github.com/go-chi/chi/v5 v5.1.0
-	github.com/ipsavitsky/yandex-speller v0.0.2
 )
 
 require (
